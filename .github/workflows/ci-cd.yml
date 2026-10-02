@@ -1,0 +1,58 @@
+name: EVE Health+ CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: eve_health
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+          cache: 'npm'
+
+      - name: Install Monorepo Dependencies
+        run: npm install
+
+      - name: Generate Prisma Client
+        run: npm run db:generate --workspace=apps/backend
+
+      - name: Build Backend Gateway
+        run: npm run build --workspace=apps/backend
+
+      - name: Build Vite Frontend
+        run: npm run build --workspace=apps/frontend
+
+      - name: Set up Python for AI Service
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install AI Service Dependencies
+        run: |
+          cd apps/ai-service
+          pip install -r requirements.txt

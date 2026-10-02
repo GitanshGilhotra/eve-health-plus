@@ -1,0 +1,91 @@
+# ==============================================================================
+# EVE Health+ | Enterprise Diagnostic Platform - .gitignore
+# ==============================================================================
+
+# --- Node & JavaScript Dependencies ---
+node_modules/
+**/node_modules/
+.pnp
+.pnp.js
+
+# --- Build Outputs ---
+dist/
+**/dist/
+build/
+out/
+.next/
+.turbo/
+.cache/
+
+# --- Environment Variables & Sensitive Credentials ---
+.env
+.env*.local
+.env.development
+.env.test
+.env.production
+**/.env
+**/.env.*
+# Keep example env files tracked for deployment templates
+!.env.example
+!**/.env.example
+
+# --- Python & AI Service ---
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Logs & Telemetry ---
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --- Databases & Local Storage ---
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+prisma/migrations/dev.db
+
+# --- OS & System Artifacts ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# --- IDE & Editor Settings ---
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# --- Temporary & Agent Scratch Scripts ---
+theme-changer.js
+*.tmp
+*.temp
+.tempmediaStorage/
+.system_generated/

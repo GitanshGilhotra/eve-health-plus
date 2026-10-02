@@ -1,0 +1,219 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PATIENT
+  CENTER_ADMIN
+  PLATFORM_ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  CANCELLED
+  RESCHEDULED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  email         String         @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  role          Role           @default(PATIENT)
+  isLocked      Boolean        @default(false)
+  failedLogins  Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  bookings        Booking[]
+  refreshTokens   RefreshToken[]
+  sessions        UserSession[]
+  reviews         Review[]
+  medicalReports  MedicalReport[]
+  aiConversations AIConversation[]
+  activityLogs    ActivityLog[]
+}
+
+model DiagnosticCenter {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  location     String
+  contactEmail String
+  contactPhone String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tests        DiagnosticTest[]
+  bookings     Booking[]
+}
+
+model DiagnosticTest {
+  id               String           @id @default(auto()) @map("_id") @db.ObjectId
+  centerId         String           @db.ObjectId
+  name             String
+  description      String?
+  category         String?          @default("General Wellness")
+  prepInstructions String?
+  price            Float
+  durationMin      Int              @default(30)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  center           DiagnosticCenter @relation(fields: [centerId], references: [id])
+  bookings         Booking[]
+}
+
+model Booking {
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String           @db.ObjectId
+  testId          String           @db.ObjectId
+  centerId        String           @db.ObjectId
+  appointmentDate DateTime
+  amount          Float
+  status          BookingStatus    @default(PENDING)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id])
+  test            DiagnosticTest   @relation(fields: [testId], references: [id])
+  center          DiagnosticCenter @relation(fields: [centerId], references: [id])
+  payment         Payment?
+}
+
+model Payment {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  bookingId        String         @unique @db.ObjectId
+  amount           Float
+  currency         String         @default("INR")
+  gatewayOrderId   String?
+  gatewayPaymentId String?
+  status           PaymentStatus  @default(PENDING)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  booking          Booking        @relation(fields: [bookingId], references: [id])
+  events           PaymentEvent[]
+}
+
+model PaymentEvent {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  paymentId   String        @db.ObjectId
+  status      PaymentStatus
+  payload     Json?
+  createdAt   DateTime      @default(now())
+
+  payment     Payment       @relation(fields: [paymentId], references: [id])
+}
+
+model WebhookEvent {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId         String   @unique
+  provider        String   @default("razorpay")
+  eventType       String
+  payloadHash     String
+  processingState String   @default("PENDING") // PENDING, PROCESSED, FAILED
+  retryCount      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model RefreshToken {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  token     String   @unique
+  userId    String   @db.ObjectId
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model UserSession {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  deviceInfo String?
+  ipAddress  String?
+  lastActive DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model Review {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  type      String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  action     String
+  entityId   String
+  entityType String
+  userId     String?
+  details    Json?
+  createdAt  DateTime @default(now())
+}
+
+model MedicalReport {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  fileUrl   String
+  testType  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model ActivityLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  action    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model AIConversation {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  title     String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model KnowledgeDocument {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  s3Url     String
+  status    String
+  createdAt DateTime @default(now())
+}

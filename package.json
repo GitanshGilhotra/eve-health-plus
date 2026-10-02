@@ -1,0 +1,15 @@
+{
+  "name": "eve-health-plus",
+  "version": "1.0.0",
+  "description": "EVE Health+ - Enterprise Healthcare Diagnostic Booking Platform",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "docker-compose up -d && npm run dev --workspaces",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces"
+  }
+}
